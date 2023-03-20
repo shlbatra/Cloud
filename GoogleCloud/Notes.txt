@@ -1,0 +1,484 @@
+1. 
+Organization, Folder and Projects
+- create Organization
+    - need domain and workspace account 
+    - create google workspace account using domain
+        - set of apps included in workspace for team - gmail, other collobaration tools
+    - Use organization when use email for that to login
+- create folders 
+    - got to IAM - org admin role 
+    - need folder admin role 
+    - Manage resources -> create folder 
+- create projects 
+    - within folder -> create project 
+2.
+Identity and Access Management (IAM)
+- manage access control by defining who(identity) has what access (role) for which resource
+- identity -> google account, service acct, google gro, google workspace acct, all auth users, all users on internet
+- Role -> group of permission 
+- Role Types -> basic(viewer, editor, owner) , predefined(granular access for service acc to google cloud ex. compute instance admin) 
+    and custom roles(granular access acc to user specified list).
+3. Cretae first VM in GCP 
+- compute engine -> create Instance 
+- Connection timeout - port 22 while ssh to VM
+    - gcloud config set project <projectname> 
+    - gcloud compute ssh demo --zone=us-west4-b  (Login to demo vm name)
+    - VPC Networks -> default network -> firewall rules -> allow ssh traffic on port 22
+    - 0.0.0.0/0 (allow traffic from anywhere), port 22 (tcp)
+4.
+Create and Access Windows VM in GCP
+    - Create VPC Network with basic firewall settings and subnet 
+    - Any CIDR Range for private IP allowed (10.10.18.0/28)
+    - Then create instance -> boot instance -> window server -> networking -> windows demo in interface
+    - set windows password
+    - login using external IP with RDP 
+    - windows use 3389 port for rdp - open on VPC firewall 
+    - boot disk (C:/) - to add additional space -> edit -> add new disk -> then mount disk by disk 
+    partition -> create new volume. 
+5. 
+Internal and External IP in GCP
+    - internal ip assigned to laptop when connect to internet, external ip -> how access from internet - google my 
+    external ip 
+    - internal ip take from default subnet range -> ex. 10.128.0.0/20  (Ephemeral take IP that available in range)
+    - External - can be none or Ephemeral - assign available from range 
+6. 
+Ephemeral and static IP in GCP 
+    - available in both external and internal IP
+    - network interface -> 
+    - Ephemeral - take any ip range available 
+    - buy domain, map in DNS -> domain name to External Ip address, if stop VM then Ephemeral IP change
+    - Static IP -> vpc network -> ip address -> reserver static ip address -> attach to VM   
+7. 
+Cloud Function - Move large files from gcs bucket 
+    - Single purpose stand alone functions that respond to cloud events 
+    - serverless execution env 
+    - simple, single purpose fns that are attached to events emitted from cloud infra and services
+    - triggered by cloud storage, http, cloud pub/sub, cloud logging 
+    - cloud functions -> trigger type -> cloud storage , event type - finalizing file in bucket, 
+    runtime -> Python -> main.py has code, requirement for packages -> deploy fn 
+    - check logs in cloud build   
+8.
+Create VPC, Subnet, Network tags, and Firewall Rules in GCP
+    - VPC Network -> Create -> Subnet -> Custom -> Add subnet for specific region -> 
+    CIDR range (use any private address range) ex. 10.0.0.0/24 (define how many VM create in subnet) -> 
+    - Firewall rules - keepiong same for now -> create VPC 
+    - project -> default VPC and use own VPC Network 
+    - create VM instance - add label (vpc -> demo, env -> dev) , networking -> demo1 tag, interface -> demo-vpc, 
+    subnet -> need to select region of VM same as subnet region,  
+    - gcloud compute ssh <vmname> --zone=asia-south1-c , port 22 connection timeout error -> add firewall rules in
+    VPC network -> allow-incoming-traffic -> Ingress -> Allow -> tags (demo1) -> IPv4 range for traffic - everywhere
+    0.0.0.0/0 -> protocl and ports - tcp on 22 for ssh, 
+    - firewall rule to block traffic -> vpc -> create firewall -> deny outgoing traffic -> egress -> deny -> 
+    dest ip (0.0.0.0/0 - all traffic) - deny all protocols and ports, ping www.google.com - no response
+
+9.
+VPC Peering in GCP 
+    - Internal IP comm possible within same VPC
+    - 2 VPC networks interact using private IPs. Ex SubnetA(10.0.0.0/16)    with SubnetB(10.8.0.0/16)
+    - Ex. Create network peering from Network A to B and create firewall in Network A
+    then create network peering from Network B to A and create firewall in Network B 
+    - Create VPC Network in Project A with VPC A - custom subnet a - 10.0.0.0/24 
+    - Project B - VPC B - custom subnet b - 10.10.10.0/24 
+    - create firewall for VPC A -> allow ingress, all instances, range 0.0.0.0/0 -> tcp -> 22 , other protocol - icmp 
+    - create similar firewall for VPC B 
+    - create VMs in both network - not communicate without VPC peering with internal IP, instancea, instanceb
+    - gcloud compute ssh instancea --zone=us-central1-a (ping internal ip of instance b not work)
+    - ping external ip on instance b - work 
+    - create vpc network peering -> create connection ->  vpca , 
+    peered network - provide project id, and vpcb, - create peering . Similar do from project b 
+    - peering status inactive as needs to be both end. if done both end, then status active 
+    - ping internalIP for other vpc and get response now 
+
+10.
+Dataflow in Google Cloud 
+    - unified stream and batch data processing service 
+    - serverless 
+    - based on apache beam -> Batch and Stream processing 
+- Load Data from GCS to Big Query 
+    - create Job from Template -> Text Files on Clopud Storage to BigQuery 
+    - JS UDF path -> mapping which column of file to database 
+    - JSON file - schema 
+    - data file -> csv format 
+    - add above 3 files to storage bucket and get gs paths
+    - 
+
+
+
+11. 
+BigQuery 
+    - Dataset -> Create Dataset (datamart that has multiple tables)
+    - Create table inside dataset -> load job created 
+    - Columnar storage so chose column to save cost 
+Partitioning in Big Query 
+    - optimize big query performance with partitioning and clustering 
+    - store columnar so depend on columns and not rows for performance (fetch rows data)
+    - create partitioned table -> so dont get all rows when run select with where condition 
+    - ex. create table Dev.tech_forum_partitioned partition by date(creation_date)
+          as select * from dev.tech_forum
+    - Query performance improve if run where condition on creation_date
+Federated Queries and External Tables 
+    - External table acts like standard bigquery table with metadata - table schema but data resides in 
+    external source 
+    - external source can be bigtable, cloud storage, drive, amazon s3, azure blob storage 
+    - create table -> google cloud storage -> table type (external) -> table name -> auto detect schema 
+    show table size 0B as big query has metadata only 
+    - Federated Query -> send query to external database and get result as temp table 
+    - Use Big Query Connection API
+    - use EXTERNAL_QUERY function -> Cloud Spanner, Cloud SQL 
+    - Ex. Cloud Spanner query using Big Query 
+    cloud spanner -> instance -> db -> table 
+    big query -> external data source -> cloud spanner -> connection id (anything) -> database name -> 
+    project/{projname}/instance/{instancename}/databases/{database} -> create connection
+    external connection created -> us.fed.demo -> query -> select * from 
+    EXTERNAL_QUERY("projects/projname/locations/us/connections/fed-demo","select * from emp")
+Big Query Access Control 
+    - provide access to prod dataset -> shared dataset -> add principals (email id) with role -> 
+    - limit access on table level 
+    - table -> share table -> add principals with role 
+
+12. 
+Google Cloud Storage Buckets 
+    - Online object storage 
+    - bucket name needs to be unique 
+    - apply protection on bucket -> protection 
+    - object versioning (store versions of bucket for recovery)
+    - retention policy -> need object versioning off to use this (cannot use same time)
+    set retention time for object -> not delete within that time. 
+    - Lifecycle 0 Move logs to archival/delete after certain time 
+Retention policy / Object Versioning 
+    - Protection -> ex. config files > edit and not delete or files never delete
+    - Object Versioning -> Enable -> upload files -> delete -> show deleted files -> no live object and 
+    version history -> restore file back as live object , edit and upload file with same name -> load with 
+    new version, go to versions -> recove from there, restore prev file, 
+    - Retention Policy -> Define retention policy -> not change object for a time period, if retention policy 
+    locked, then not delete or reduce retention policy 
+
+13. 
+Cloud Composer (Airflow)
+    - fully managed workflow orchestration service built on airflow 
+    - Ex. Stop Database VM -> Take machine image ->if failed take disk snapshot -> Start VM again 
+    - Ex. File check on VM -> if failed, retry after 10 mins -> Move GCS -> Trigger dataflow job -> Load data to BQ 
+    - select composer -> deploy gke cluster using apache airflow image with storage buckets and services 
+    - create sepearte service acct as need access to all services -> editor access, 
+    - composer2 - with autoscaling,
+    - Env as create multiple services, 
+    - airflow database -> cloud sql -> in different project (created tenant project - google managed)
+    - cloudsql proxy -> connect components to airflow db 
+    - composer agent -> set up env / changes to env 
+    - airflow monitoring - send details to cloud monitoring 
+    - airflow initdb - create initial database
+    - gcsfuse -> use env bucket as file system for airflow -> 
+    - fluentd -> collects logs and send to cloud logging 
+    - main service - gke cluster -> airflow services within cluster (workloads)
+    - default dag -> airflow_monitoring -> check server health, print echo (dumy job)
+Create first airflow dag in cloud composer  
+    - Dags - collection of tasks 
+    - task - perform any function
+    - Dag definition file (python script)
+    - upload to /Dags folder - visible in UI 
+    - DAGs folder -> create file to show up in UI , 
+Restart cloud composer services (webserver, scheduler, worker, triggers)    
+    -  services deployed in gke cluster -> composer name -> workloads -> all services see here -> 
+    airflow-scheduler (how restart service) 
+    -> connect to gke cluster in console -> kubectl get deployments -n <namespace of scheduler> 
+    -> check pods -> kubectl get pods -n <namespace>
+    -> 3 pods for webservice as autoscaling -> kubectl rollout restart deployment <schedule deployment name> -n <namespace>
+    - restart webserver 
+    kubectl rollout restart deployment <webserver> deployment name> -n <namespace>
+    - restart webserver alternate command 
+        gcloud beta composer environments restart-web-server <composer name> --location=<region>
+    
+14. 
+Google Cloud Data Processing Services 
+    - Data Ingestion 
+        - Cloud Pub/Sub (realtime streaming or async messaging)
+        - GCS (object data)
+        - App Engine (app producing data that tranformed into diff format)
+    - Data Processing include data tranformation 
+        - Dataflow (Beam framework) -> real time streaming 
+        - Datafusion -> no code tool, 
+        - Dataproc -> Big data, hadoop and spark jobs, 
+    - Data Storage 
+        - google bigquery (Serverless WH) - relational data / analytics purpose
+        - BigTable (noSQL) - low latency (timeseries data) for huge operations 
+        - GCS - object data
+        - Cloud SQL or Cloud Spanner (Relational)
+    -  Data Analytics (ML & AI)
+        - Looker 
+        - ML APIs 
+        - Google Data Studio 
+    - Orchestation (Cloud Composer)
+
+15.
+GCP Networking 
+    -  IP address ex. 10.88.135.144/28 -> netmask -> 255.255.255.240, first ip -> 10.88.135.144, 
+    last ip -> 10.88.135.158
+    - Private IP - over lan , wifi assign internal ip and connect to internet then external ip . ipconfig command
+    Public IP - on public network 
+    - create any service in cloud - need vpc in cloud - have default in project, in default, 26 subnets 
+    - vpc vs subnet -> Within vpc, create VM with subnet (has IP range)
+    - subnet - give private ip address range with cidr notation - provide range 
+        create 100 vm in subnet need 100 ip addresses,
+        ex. 192.0.2.0/28 has 32-28 = 2^4 = 16 ip address per subnet and 2^4=16 subnet, 4 ip address reserve (1, 2, second to last and last)  
+        ex. 192.0.2.0/24 has 32-24 = 256 ip address and 1 subnet 
+    - vm -> network interfaces -> use vpcreated with subnet created, port 22 if ssh -> need firewall 
+    - vpc firewalls -> allow or deny connections to or from VM instances based on config specify, 
+    default - 2 firewalls rules apply - all ingress and egress deny, VPC -> add firewall rule -> allow 
+    ssh -> ingress -> allow -> targets -> which VM or network tags, source -> 0.0.0.0/0 -> all ranges , 
+    - if create vm with external ip then access internet  
+    - if external ip as none -> cannot login without external ip (as logging with laptop - internet), not use 
+    internet, 
+    - logging without external ip -> IAP (Identity aware policy)
+    - using internet -> NAT Gateway 
+    - IAP - IAP TCP forwarding to enable admin access to VM instances, to enable : 
+     -> 1. enable cloud identity aware proxy api (API and services -> library) 2. Assign 
+     roles/iap.tunnelResourceAssessor role to user 3. create firewall to allow ssh (TCP 22) from IP range 
+     provided by google (25.235.240.0/20) -> allow ssh connection to VM
+    - access of internet without internet  - Cloud NAT -> Network address translation -> outgoing connectivity 
+    for CM without external IP, Private GKE clusters, cloud run through serverless VPC access, app engine standard 
+    env instance through serverless vpc access 
+        -> create Cloud NAT -> name, select vpc network, region, cloud router -> create new, -> set up NAT
+        -> once create, sudo apt-get update start working within VM 
+    - VPC Peering 
+    -> create two VMs in same VPC -> if curl from another machine using internal IP - not work, you need to 
+    add firewall rule -> allow-all -> ingress, all, 0.0.0.0/0 -> TCP 80 port -> works within vpc network only
+    -> create two vpcs with two vms -> vm1 not access in vm2 as seperate vpc network, set up vpc peering -> allow 
+    internal IP address connectivity across 2 VPC networks, vpc network peering -> do both sides of network a and 
+    b -> name, provide vpc networks both ways and create -> status inactive -> becomes active when create both 
+    ways, now use internal ip across two VPCs 
+    - Shared VPC 
+    - create multiple projects for 
+    -> network -> cloud vpn, vpc, cloud firewall rules (send logs via log router)
+    -> compute - app servers, gke, app engine
+    -> database - database servers, cloud sql 
+    - all above connect to cloud logging and cloud monitoring (monitoring project)
+    - assign roles for each team accordingly. 
+    - VPC in network - host and other projects using shared vpc - service 
+    - Shared VPC -> allows to connect resources from multiple projects to common VPC so they can communicate 
+    with each other securely and efficiently using internal ips. network project called host project and attach 
+    one or more service projects to it, VPC network in host project called Shared VPC network and eligible resources 
+    from service projects use subnets in Shared VPC, 
+    - Ex. shared vpc only for organization, 
+    -> go to project -> create vpc -> shared vpc tab -> set up -> enable host permission role at organization level 
+    -> add role -> "compute shared vpc admin" -> subnet to share -> attach service project (got to project - enable 
+    compute api) -> attach project (service to host project) -> show as an option to chose vpc (networks shared with me)
+
+16.
+Cloud Source Repo and Cloud Build 
+    - Cloud Source Repo -> source code management, fully featured private git repo, 
+    -> source repo -> create or connect existing repo -> clone cloud repo to local repo 
+    -> gcloud source repos clone <repo name> --project=<projectname>, git add . -> git commit -m "message",
+    -> git push -u origin master -> 
+    - Cloud Build -> execute build on Google Cloud (automation), similar to jenkins / gitlab, import source code 
+    from repo, execute build to your specifications and produce artifacts such as Docker containers or java archives 
+    -> cloud build -> triggers -> set up triggers -> name -> event - push to branch -> source repo (cloud repo) -> 
+    config -> dockerfile -> build trigger, RUN trigger -> gcr.io -> build-image -> Image created 
+
+17. 
+Container Registry (CR) and Artifact Registry(AR) 
+    - CR -> support docker images, multi regional repos, no granular permissions but based on storage bucket 
+    -> container registry -> direct push docker image here (not create repo here)
+
+    - AR -> support images, OSpackages, language packages (java, python), region repo support, granular permission model 
+    -> artifact registry -> create repo -> store diff things here (docker, python, etc) -> region -> create 
+    
+    -> Ex. Simple Web-App -> dockerfile -> docker image -> push docker image to CR / AR 
+    -> cloud shell -> mkdir myapp -> cd myapp -> nano main.py (create flask app for hello world) 
+    -> nano Dockerfile to run flask app 
+        FROM python:3.9-alpine 
+        RUN pip install flask 
+        WORKDIR /myapp 
+        COPY main.py /myapp/main.py
+        CMD ["python","/myapp/main.py"]
+    -> Build image using docker file and push to CR
+    -> docker build -t gcr.io/<projectid>/<imagename>:<tag> .(path for dockerfile and python)      (build image)
+    -> docker push gcr.io/<projectid>/<imagename>:<tag>     (push to CR)
+    -> push to AR in repo created 
+        -> gcloud auth configure-docker <regionname>-docker.pkg.dev
+        -> docker build -t <regionofrepo>-docker.pkg.dev/<projectid>/<repoinAR>/<imagename>:tag 
+        -> docker push <regionofrepo>-docker.pkg.dev/<projectid>/<repoinAR>/<imagename>:tag (push to AR)
+    
+
+18. 
+Google Kubernetes Engine (GKE)
+    - Open Source container orchestration engine for automating deployment, scaling and management of containerized apps 
+    - managed kubernetes by Goofle 
+    - Container -> share OS but have own filesystem, CPU, memory, process space and more, portable across hardware
+    - GKE Cluster -> kubectl commands -> API server 
+    -> Control plane (master node) - Storage, Scheduler, Resource Controllers 
+    -> Nodes - user pods (containers) 
+    -> Connected google cloud services -> VPC, Persistent Disk, Load Balancer, Cloud operations for logging
+    - Console -> create GKE cluster, create container image and deploy on GKE 
+    -> gke -> Create -> Configure -> name -> location -> static version for control panel 
+    -> node pools -> default pool -> number of nodes -> nodes (decide OS, machine config)
+    -> networking -> security use security acct created -> metadata , other details check and then create GKE 
+    - compute engine -> see 3 vm nodes as part of gke cluster, create instance group with nodes created,
+    - Ex hands on -> create gke cluster -> create simple web app (flask) -> create docker container image 
+    -> push container image to CR -> deploy image to gke -> expose service -> access service 
+    - 1. Create main.py file with python flask code and Dockerfile to build docker image and push to CR as shown 
+    in 17 ->  deployments in gke -> need image in CR or AR -> Existing container image -> CR -> select image 
+    -> continue -> configuration -> deployment name -> deploy 
+    -> how access app ? -> expose deployment and create as service -> source and target port , protocol , service 
+    type as load balancer and service name and expose -> load balancer IP address -> expose service
+    - interact with K8s using CLI 
+    -> use gcloud when interact with gke cluster, interact with gke component inside cluster - kubectl (pod/service)
+    -> connect to cluster , list deployments and pods, deploy workload, expose service, 
+    scale deployment to more nodes 
+    -> gcloud container clusters list (list cluster)
+    -> gcloud container clusters describe <clustername> --zone=<zonename>(describe cluster)
+    -> gcloud containers clusters get-credentials <clustername> --zone <zonename> --project <projectname> 
+    (connect to cluster) -> create .kube folder with config details 
+    -> kubectl get deployments    (list all deployments on container)
+    -> kubectl get pods   (2 pods in that deployment)
+    -> kubectl create deployment <deploymentname> --image=<imagename>                  (deploy another image)
+    -> kubectl expose deployment <deploymentname> --type=LoadBalancer --port=9090 --target-port=8080(expose deployment)
+    -> kubectl get service   (to get IP address for load balancer)
+    -> kubectl scale deployment <deploymentname> --replicas=2    (scale deployment)
+    -> gcloud container clusters <clustername> resize --num-nodes=4 --zone=<zonename>    (increase nodes on cluster)
+
+19. 
+Cloud Shell and cli 
+    - Cloud Shell -> access via browser itself -> activate cloud shell on top rt -> linux like terminal (5GB disk space)
+    -> online dev and operations env and developer ready env and fav tools preinstalled and cloud code tools available 
+    -> gcloud config set project <projectid>   (change project name)
+    - gcloud commands -> create / update / delete services on terminal 
+    -> gcloud compute instances (commands for compute )
+    -> ex. gcloud compute instances stop instance-1 --zone=<zonename>
+    -> open editor on top right -> similar to VS Code 
+    - google cloud sdk -> terminal in windows 
+    -> run gcloud commands here 
+    -> gcloud init -> provide email and project name and region / zone 
+
+20. 
+Google Cloud Logging and Monitoring 
+    - Storage for logs, UI called Logs Explorer and API to manage logs programatically
+    - Log Types -> Google cloud platform logs, user written logs, agent logs, security logs 
+    - Cloud Console -> Logging -> select resource for service Ex. VM Instance with id, 
+    -> Ex. Create VM -> go back to logging -> last 15 mins -> see metadata for vm , log name -> activity logs - show 
+    activity performed , data_access -> show access ex bucket accessed. enable data_access logs -> IAM -> audit logs -> 
+    -> storage -> enable googlce cloud storage -> log types include everything, access_transparency logs -> for any change by google employees
+    -> logs stored somewhere -> refine scope -> get storage bucket names -> _default and _required
+    -> _required -> admin activity audit logs, system logs, access transparency logs 
+    -> _default -> anything not in required routed by _default sink 
+    -> log router -> see log router sinks here -> sink details -> provide filter with what logs stored, 
+    -> log router - create new sink -> for particular vm instance, 
+
+21.
+Google Cloud Secret Manager 
+    - store, manage and access secrets as binary blobs or text secrets. With appropriate permissions, you can 
+    view contents of secrets
+    - store pwd encrypted with default key from GCP side or your own KMS, 
+    - Console -> secret manager -> create secret -> name -> secret value -> select regions or all -> encryption (provide 
+    cust managed key here) -> create secret , To expire a secret, use gcloud to create secret 
+    - Ex. Cloud Function -> from google.cloud import secretmanager,  using service account -> need permission 
+    to access secret -> IAM -> add roles for service account -> Secret Manager Secret Accessor role, 
+
+22. 
+Service Account 
+    - Applications talk to GCP from outside using Service Accounts 
+    - Service Acct used by app within VM to talk to GCP services (Cloud Storage / Cloud Fns)
+    - Type of Role -> Primitive(owner, editor and viewer), predefined(GCP service based) or Custom roles 
+    - Console -> IAM -> Service Accounts -> Create -> name & description -> create -> provide role -> ex. 
+    storage object creator -> continue -> update. -> Default Service Accounts created when activate APIs
+    -> Create VM instance -> Service Account -> select the one you created, 
+    -> gcloud compute instance describe <instancename> --format json (instance metadata in json) -> make sure 
+    scope of service account is cloud-platform. Set using command below -
+    -> gcloud compute instances set-service-account <instancename> --service-account <serviceacctname> --scopes cloud-platform 
+    -> use gstutil to interact with gcs -> gsutil ls <bucketname> ; gsutil cp <filename> <bucketname>
+    -> create bucket - gsutil mb <bucketname>  (need service acct permission to create bucket) 
+
+23. 
+Google App Engine
+    - fully managed serverless platform for developing and hosting web apps at scale 
+    - single app resource that consists on one or more services. Each service has diff versions -> each version 
+    runs with one or more instances
+    - Console -> create env -> app engine -> create application -> location -> region -> select Resources -> 
+    AppEngine created (deploy services here), 
+    -> Cloud Shell Editor -> open workspace -> create app using Python and Flask -> gcloud config set project <projectname>
+    mkdir application ; chmod 777 application ;  use folder for app engine deployment -> create main.py with flask 
+    code, requirements.txt with library required and app.yaml includes config; 
+    app.yaml -> runtime: python39 
+    -> cd application; deploy service from this folder -> 1. gcloud app deploy -v v01  -> deploy service in 
+    cloud build, In services, see default service with version added 
+    -> deploy new version of app make changes and then run command -> gcloud app deploy -v v02
+    -> Upgrade to new version and not publish to end users ->  gcloud app deploy -v v03 --no-promote -> service 
+    deployed but not accessible to users, -> In versions -> v3 - 0% traffic, services still at v2, then select 
+    v3 -> migrate traffic or split traffic; 
+    -> firewall rules -> default all allowed, create firewall -> deny any IP ranges you dont want 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
